@@ -2,15 +2,17 @@
 #define SIMPLE_PFLOW_DATA_H
 
 #include "ap_int.h"
+#include <hls_stream.h>
 
 typedef ap_int<16> pt_t;
 typedef ap_int<10>  etaphi_t;
 typedef ap_int<5>  vtx_t;
 typedef ap_uint<3>  particleid_t;
 typedef ap_int<10> z0_t;  // 40cm / 0.1
-	
 typedef ap_uint<14> tk2em_dr_t;
 typedef ap_uint<14> tk2calo_dr_t;
+typedef ap_uint<64> axi_t;
+typedef hls::stream<axi_t> stream_t;
 
 enum PID { PID_Charged=0, PID_Neutral=1, PID_Photon=2, PID_Electron=3, PID_Muon=4 };
 
@@ -23,12 +25,13 @@ enum PID { PID_Charged=0, PID_Neutral=1, PID_Photon=2, PID_Electron=3, PID_Muon=
 
 // PF
 #ifdef TESTMP7  // reduced input size to fit in a board
-   #define NTRACK 10
-   #define NCALO 12
-   #define NMU 1
-   #define NEMCALO 12
+   #define NTRACK 14
+   #define NCALO 10
+   #define NMU 2
+   #define NEMCALO 10
    #define NPHOTON NEMCALO
-   #define NSELCALO 12
+   #define NSELCALO 10
+   #define DATA_SIZE 32
 #elif TESTCTP7  // reduced input size to fit in a board
    #define NTRACK 7
    #define NCALO 5

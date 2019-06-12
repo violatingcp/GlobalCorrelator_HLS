@@ -37,6 +37,7 @@ class MP7PatternSerializer {
         ~MP7PatternSerializer() ;
         
         void operator()(const MP7DataWord event[MP7_NCHANN]) ;
+        void process(const axi_t       event[MP7_NCHANN]) ;
         
     protected:
         const std::string fname_;
@@ -58,6 +59,7 @@ class MP7PatternSerializer {
 
         template<typename T> void print(unsigned int iframe, const T & event);
         void push(const MP7DataWord event[MP7_NCHANN]);
+        void push(const axi_t       event[MP7_NCHANN]);
         void flush();
         void zero();
     
@@ -72,13 +74,16 @@ class HumanReadablePatternSerializer {
         ~HumanReadablePatternSerializer() ;
         
         void operator()(const EmCaloObj emcalo[NEMCALO], const HadCaloObj hadcalo[NCALO], const TkObj track[NTRACK], const MuObj mu[NMU], const PFChargedObj outch[NTRACK], const PFNeutralObj outpho[NPHOTON], const PFNeutralObj outne[NSELCALO], const PFChargedObj outmu[NMU]) ;
+        void operator()(const PFChargedObj inch[NTRACK], const PFChargedObj inem[NPHOTON], const PFChargedObj inne[NSELCALO], const PFChargedObj inmu[NMU], const PFChargedObj outpart[DATA_SIZE]);
         void dump_inputs(const EmCaloObj emcalo[NEMCALO], const HadCaloObj hadcalo[NCALO], const TkObj track[NTRACK], const MuObj mu[NMU]) ;
         void dump_emcalo(const EmCaloObj emcalo[NEMCALO], unsigned int N = NEMCALO) ;
         void dump_hadcalo(const HadCaloObj hadcalo[NCALO], unsigned int N = NCALO) ;
         void dump_track(const TkObj track[NTRACK], unsigned int N = NTRACK) ;
         void dump_mu(const MuObj mu[NMU], unsigned int N = NMU) ;
         void dump_outputs(const PFChargedObj outch[NTRACK], const PFNeutralObj outpho[NPHOTON], const PFNeutralObj outne[NSELCALO], const PFChargedObj outmu[NMU]) ;
-
+	void dump_pfch(const PFChargedObj outch[NTRACK], const PFChargedObj outpho[NPHOTON], const PFChargedObj outne[NSELCALO], const PFChargedObj outmu[NMU]); 
+	void dump_out(const PFChargedObj outpart[DATA_SIZE]);
+	
     protected:
         const std::string fname_; 
         FILE *file_; // may be stdout

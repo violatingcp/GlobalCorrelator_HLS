@@ -52,6 +52,25 @@ void MP7PatternSerializer::operator()(const MP7DataWord event[MP7_NCHANN])
         }
     }
 }
+void MP7PatternSerializer::process(const axi_t event[MP7_NCHANN]) 
+{
+    if (!file_) return;
+    if (nmux_ == 1) print(ipattern_, event);
+    else push(event);
+    ipattern_++;
+    if (nempty_ > 0) {
+        axi_t zero_event[MP7_NCHANN];
+        for (unsigned int j = 0; j < MP7_NCHANN; ++j) zero_event[j] = 0;
+        for (unsigned int iempty = 0; iempty < nempty_; ++iempty) {
+            if (fillmagic_) {
+                for (unsigned int j = 0; j < MP7_NCHANN; ++j) zero_event[j] = ((ipattern_ << 16) & 0xFFFF0000) | ((iempty << 8) & 0xFF00) | (j & 0xFF);
+            }
+            if (nmux_ == 1) print(ipattern_, zero_event);
+            else push(zero_event);
+            ipattern_++;
+        }
+    }
+}
 template<typename T> void MP7PatternSerializer::print(unsigned int iframe, const T & event) 
 //void MP7PatternSerializer::print(const MP7DataWord event[MP7_NCHANN]) 
 {
@@ -72,6 +91,16 @@ template<typename T> void MP7PatternSerializer::print(unsigned int iframe, const
   fprintf(file_, "\n");
 }
 void MP7PatternSerializer::push(const MP7DataWord event[MP7_NCHANN])
+{
+    int imux = (ipattern_ % nmux_), offs = imux * nchann_;
+    for (unsigned int ic = 0, i = 0; ic < nchann_; ++ic) {
+        for (unsigned int im = 0; im < nmux_; ++im, ++i) {
+            buffer_[im][offs+ic] = event[i];
+        }
+    }
+    if (imux == nmux_-1) flush();
+}
+void MP7PatternSerializer::push(const axi_t event[MP7_NCHANN])
 {
     int imux = (ipattern_ % nmux_), offs = imux * nchann_;
     for (unsigned int ic = 0, i = 0; ic < nchann_; ++ic) {
@@ -129,6 +158,18 @@ void HumanReadablePatternSerializer::operator()(const EmCaloObj emcalo[NEMCALO],
     ipattern_++;
 }
 
+
+void HumanReadablePatternSerializer::operator()(const PFChargedObj inch[NTRACK], const PFChargedObj inem[NPHOTON], const PFChargedObj inne[NSELCALO], const PFChargedObj inmu[NMU], const PFChargedObj outpart[DATA_SIZE]) 
+{
+    if (!file_) return;
+    fprintf(file_, "Frame %04u:\n", ipattern_);
+    dump_pfch(inch,inem,inne,inmu);
+    dump_out (outpart);
+    fprintf(file_, "\n");
+    if (file_ == stdout) fflush(file_);
+    ipattern_++;
+}
+
 void HumanReadablePatternSerializer::dump_inputs(const EmCaloObj emcalo[NEMCALO], const HadCaloObj hadcalo[NCALO], const TkObj track[NTRACK], const MuObj mu[NMU]) {
     dump_hadcalo(hadcalo);
     dump_emcalo(emcalo);
@@ -178,6 +219,37 @@ void HumanReadablePatternSerializer::dump_outputs(const PFChargedObj outch[NTRAC
     for (int i = 0; i < NMU; ++i) {
         fprintf(file_, "   muon    pf %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d\n", i,
                 int(outmu[i].hwPt), int(outmu[i].hwEta), int(outmu[i].hwPhi), int(outmu[i].hwId));
+    }
+    if (file_ == stdout) fflush(file_);
+}
+
+
+void HumanReadablePatternSerializer::dump_pfch(const PFChargedObj outch[NTRACK], const PFChargedObj outpho[NPHOTON], const PFChargedObj outne[NSELCALO], const PFChargedObj outmu[NMU]) 
+{
+    for (int i = 0; i < NTRACK; ++i) {
+        fprintf(file_, "   charged pf %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d      hwZ0 %+7d\n", i,
+                int(outch[i].hwPt), int(outch[i].hwEta), int(outch[i].hwPhi), int(outch[i].hwId), int(outch[i].hwZ0));
+    }
+    for (int i = 0; i < NPHOTON; ++i) {
+        fprintf(file_, "   photon  pf %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d\n", i,
+                int(outpho[i].hwPt), int(outpho[i].hwEta), int(outpho[i].hwPhi), int(outpho[i].hwId));
+    }
+    for (int i = 0; i < NSELCALO; ++i) {
+        fprintf(file_, "   neutral pf %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d\n", i,
+                int(outne[i].hwPt), int(outne[i].hwEta), int(outne[i].hwPhi), int(outne[i].hwId));
+    }
+    for (int i = 0; i < NMU; ++i) {
+        fprintf(file_, "   muon    pf %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d\n", i,
+                int(outmu[i].hwPt), int(outmu[i].hwEta), int(outmu[i].hwPhi), int(outmu[i].hwId));
+    }
+    if (file_ == stdout) fflush(file_);
+}
+
+void HumanReadablePatternSerializer::dump_out(const PFChargedObj outpart[DATA_SIZE]) 
+{
+    for (int i = 0; i < DATA_SIZE; ++i) {
+        fprintf(file_, "   particle out %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d      hwZ0 %+7d\n", i,
+                int(outpart[i].hwPt), int(outpart[i].hwEta), int(outpart[i].hwPhi), int(outpart[i].hwId), int(outpart[i].hwZ0));
     }
     if (file_ == stdout) fflush(file_);
 }
