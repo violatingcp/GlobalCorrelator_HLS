@@ -527,6 +527,9 @@ void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,int iRegion,PFChar
 //typedef hls::stream<axi_t> hls::stream<axi_t>;
 //stream depth is TM6 and 240 MHz gives 24 clocks
 void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_NCHANN]) { 
+  #pragma HLS ARRAY_PARTITION variable=input complete
+  #pragma HLS ARRAY_PARTITION variable=output complete
+  #pragma HLS INTERFACE ap_none port=output
   #pragma HLS PIPELINE 
   PFChargedObj pfch[NREGIONS][NTRACK];
   PFChargedObj pfem[NREGIONS][NPHOTON];
