@@ -500,9 +500,9 @@ void algo_inputs_layer2(hls::stream<axi_t> link_in[MP7_NCHANN],hls::stream<axi_t
   //#pragma HLS ARRAY_RESHAPE variable=pfne  complete
   //#pragma HLS ARRAY_RESHAPE variable=pfmu  complete
   //Below has to be the same as in DATA note that #define doesn't seem to work
-  #pragma HLS ARRAY_RESHAPE variable=pfch  block factor=14   dim=2
-  #pragma HLS ARRAY_RESHAPE variable=pfem  block factor=10   dim=2
-  #pragma HLS ARRAY_RESHAPE variable=pfne  block factor=10   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfch  block factor=25   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfem  block factor=20   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfne  block factor=20   dim=2
   #pragma HLS ARRAY_RESHAPE variable=pfmu  block factor=2    dim=2
   //#pragma HLS RESOURCE      variable=pfch   core=RAM_2P_BRAM
   //#pragma HLS RESOURCE      variable=pfpho  core=RAM_2P_BRAM
