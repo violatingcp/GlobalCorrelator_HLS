@@ -31,7 +31,7 @@ enum PID { PID_Charged=0, PID_Neutral=1, PID_Photon=2, PID_Electron=3, PID_Muon=
    #define NEMCALO 10
    #define NPHOTON NEMCALO
    #define NSELCALO 10
-   #define DATA_SIZE 32
+   #define DATA_SIZE 128
 #elif TESTCTP7  // reduced input size to fit in a board
    #define NTRACK 7
    #define NCALO 5

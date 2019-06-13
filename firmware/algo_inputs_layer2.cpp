@@ -49,21 +49,21 @@ inline void mp7_unpack(axi_t data[N], PFChargedObj emcalo[N]) {
     #pragma HLS inline
     #pragma HLS PIPELINE
     for (unsigned int i = 0; i < N; ++i) {
-      emcalo[i].hwPt       = data[i].data(15, 0);
-      emcalo[i].hwEta      = data[i].data(24,16);
-      emcalo[i].hwPhi      = data[i].data(34,25);
-      emcalo[i].hwId       = data[i].data(38,35);
-      emcalo[i].hwZ0       = data[i].data(48,39);
+      emcalo[i].hwPt       = data[i](15, 0);
+      emcalo[i].hwEta      = data[i](24,16);
+      emcalo[i].hwPhi      = data[i](34,25);
+      emcalo[i].hwId       = data[i](38,35);
+      emcalo[i].hwZ0       = data[i](48,39);
     }
 }
 inline void mp7_unpack_seed(axi_t data, PFChargedObj &seed) {
     #pragma HLS inline
     #pragma HLS PIPELINE
-    seed.hwPt          = data.data(15, 0);
-    seed.hwEta         = data.data(24,16);
-    seed.hwPhi         = data.data(34,25);
-    seed.hwId          = data.data(38,35);
-    seed.hwZ0          = data.data(48,39);
+    seed.hwPt          = data(15, 0);
+    seed.hwEta         = data(24,16);
+    seed.hwPhi         = data(34,25);
+    seed.hwId          = data(38,35);
+    seed.hwZ0          = data(48,39);
 }
 
 template<unsigned int N,unsigned int NR> 
@@ -72,11 +72,11 @@ inline void mp7_unpack(axi_t data, PFChargedObj emcalo[N*NR],int iBase) {
     #pragma HLS PIPELINE
     for (unsigned int i = 0; i < N; ++i) {
       int pOffset = (i)*64;
-      emcalo[iBase+i].hwPt       = data.data(15+pOffset, 0+pOffset);
-      emcalo[iBase+i].hwEta      = data.data(24+pOffset,16+pOffset);
-      emcalo[iBase+i].hwPhi      = data.data(34+pOffset,25+pOffset);
-      emcalo[iBase+i].hwId       = data.data(38+pOffset,35+pOffset);
-      emcalo[iBase+i].hwZ0       = data.data(48+pOffset,39+pOffset);
+      emcalo[iBase+i].hwPt       = data(15+pOffset, 0+pOffset);
+      emcalo[iBase+i].hwEta      = data(24+pOffset,16+pOffset);
+      emcalo[iBase+i].hwPhi      = data(34+pOffset,25+pOffset);
+      emcalo[iBase+i].hwId       = data(38+pOffset,35+pOffset);
+      emcalo[iBase+i].hwZ0       = data(48+pOffset,39+pOffset);
     }
 }
 
@@ -86,11 +86,11 @@ inline void mp7_unpack(axi_t data, PFNeutralObj emcalo[N]) { //,int iBase) {
     #pragma HLS PIPELINE
     for (unsigned int i = 0; i < N; ++i) {
       int pOffset = (i)*64;
-      emcalo[i].hwPt       = data.data(15+pOffset, 0+pOffset);
-      emcalo[i].hwEta      = data.data(24+pOffset,16+pOffset);
-      emcalo[i].hwPhi      = data.data(34+pOffset,25+pOffset);
-      emcalo[i].hwId       = data.data(38+pOffset,35+pOffset);
-      emcalo[i].hwPtPuppi  = data.data(55+pOffset,39+pOffset);
+      emcalo[i].hwPt       = data(15+pOffset, 0+pOffset);
+      emcalo[i].hwEta      = data(24+pOffset,16+pOffset);
+      emcalo[i].hwPhi      = data(34+pOffset,25+pOffset);
+      emcalo[i].hwId       = data(38+pOffset,35+pOffset);
+      emcalo[i].hwPtPuppi  = data(55+pOffset,39+pOffset);
     }
 }
 template<unsigned int N, unsigned int OFFS> 
@@ -99,11 +99,11 @@ inline void mp7_pack(PFChargedObj obj[N], axi_t &data) {
     for (unsigned int i = 0; i < N; ++i) {
       #pragma HLS UNROLL
       int pOffset = i*64;
-      data.data.range(15+pOffset,0 +pOffset) = obj[i].hwPt;
-      data.data.range(24+pOffset,16+pOffset) = obj[i].hwEta;
-      data.data.range(34+pOffset,25+pOffset) = obj[i].hwPhi;
-      data.data.range(38+pOffset,35+pOffset) = obj[i].hwId;
-      data.data.range(48+pOffset,39+pOffset) = obj[i].hwZ0;
+      data.range(15+pOffset,0 +pOffset) = obj[i].hwPt;
+      data.range(24+pOffset,16+pOffset) = obj[i].hwEta;
+      data.range(34+pOffset,25+pOffset) = obj[i].hwPhi;
+      data.range(38+pOffset,35+pOffset) = obj[i].hwId;
+      data.range(48+pOffset,39+pOffset) = obj[i].hwZ0;
     }
 }
 template<unsigned int N, unsigned int OFFS> 
@@ -113,11 +113,11 @@ inline void mp7_pack(hls::stream<PFChargedObj> obj[], axi_t &data) {
       #pragma HLS UNROLL
       int pOffset = i*64;
       PFChargedObj tmpobj = obj[i].read();
-      data.data.range(15+pOffset,0 +pOffset) = tmpobj.hwPt;
-      data.data.range(24+pOffset,16+pOffset) = tmpobj.hwEta;
-      data.data.range(34+pOffset,25+pOffset) = tmpobj.hwPhi;
-      data.data.range(38+pOffset,35+pOffset) = tmpobj.hwId;
-      data.data.range(48+pOffset,39+pOffset) = tmpobj.hwZ0;
+      data.range(15+pOffset,0 +pOffset) = tmpobj.hwPt;
+      data.range(24+pOffset,16+pOffset) = tmpobj.hwEta;
+      data.range(34+pOffset,25+pOffset) = tmpobj.hwPhi;
+      data.range(38+pOffset,35+pOffset) = tmpobj.hwId;
+      data.range(48+pOffset,39+pOffset) = tmpobj.hwZ0;
     }
 }
 template<int N_TABLE>
@@ -441,6 +441,25 @@ void tausort_in(PFChargedObj pfch[N0], PFChargedObj pfpho[N1], PFChargedObj pfne
     axis_in[i+N0+N1+N2].write(pfmu[i]);
   }
 }
+template<int N,int NMAX>
+void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[N],hls::stream<axi_t > axis_in[]) {
+  #pragma HLS inline
+  #pragma HLS PIPELINE
+  const ap_int<16> eDR2MAX = DR2MAX;
+  PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
+  for (int i = 0; i < NMAX; i++) {
+    #pragma HLS UNROLL
+    int drcheck = dr2_int_cap<12>(seedeta,seedphi,pfch[i].hwEta,pfch[i].hwPhi,eDR2MAX);
+    if(drcheck < DRCONE) {
+      dummyc = pfch[i];
+    } else {
+      dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
+    }
+    axi_t dummy = (dummyc.hwId,dummyc.hwPhi,dummyc.hwEta,dummyc.hwPt); 
+    axis_in[iOffSet+i].write(dummy);
+  }
+}
+
 template<int N,int NMAX> 
 void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,int iRegion,PFChargedObj pfch[],hls::stream<axi_t> axis_in[]) { 
   #pragma HLS inline
@@ -511,7 +530,7 @@ void algo_inputs_layer2(hls::stream<axi_t> link_in[MP7_NCHANN],hls::stream<axi_t
     for(int i0 =0; i0 < NPHOTON; i0++) emin[NTRACK+i0]               = link_in[NTRACK+i0].read();
     for(int i0 =0; i0 < NCALO;   i0++) nein[NTRACK+NPHOTON+i0]       = link_in[NTRACK+NPHOTON+i0].read();
     for(int i0 =0; i0 < NMU;     i0++) muin[NTRACK+NPHOTON+NCALO+i0] = link_in[NTRACK+NPHOTON+NCALO+i0].read();
-    mp7_unpack_seed    (charge[0],chseed[idepth]);
+    mp7_unpack_seed    (chin[0],chseed[idepth]);
     mp7_unpack<NTRACK> (chin, pfch[idepth]);
     mp7_unpack<NPHOTON>(emin, pfem[idepth]);
     mp7_unpack<NCALO>  (nein, pfne[idepth]);
