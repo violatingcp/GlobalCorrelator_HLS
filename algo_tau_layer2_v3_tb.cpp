@@ -10,6 +10,8 @@
 
 #include "ap_int.h"
 #include "firmware/algo_tau_layer2_v3.h"
+#include "utils/pattern_serializer.h"
+#include "utils/test_utils.h"
 
 using namespace std;
 
@@ -38,16 +40,18 @@ int main(int argc, char ** argv) {
   MP7PatternSerializer serInPatterns  ("mp7_input_patterns.txt",1);
   MP7PatternSerializer serOutPatterns ("mp7_output_patterns.txt",1);
   HumanReadablePatternSerializer serHR("human_readable_patterns.txt");
-  MP7DataWord input[DEPTH*4][MP7_NCHANN];
-  MP7DataWord output[DEPTH*4][MP7_NCHANN];
-  for(int idepth = 0; idepth < DEPTH*4; idepth++) { 
-    for(int i0 = 0; i0 < MP7_NCHANN/2; i0++) { 
-      input[idepth][2*i0] = ( parts[idepth/4][i0].hwEta, parts[idepth/4][i0].hwPt  );
-      input[idepth][2*i0] = ( parts[idepth/4][i0].hwId,  parts[idepth/4][i0].hwPhi );
+  MP7DataWord input[DEPTH][MP7_NCHANN];
+  MP7DataWord output[DEPTH][MP7_NCHANN];
+  for(int idepth = 0; idepth < DEPTH; idepth++) { 
+    for(int i0 = 0; i0 < MP7_NCHANN; i0++) { 
+      if(i0 > DATA_SIZE-1) break; //safety check
+      input[idepth][i0] = ( parts[idepth][i0].hwId,  parts[idepth][i0].hwPhi , parts[idepth][i0].hwEta, parts[idepth][i0].hwPt  );
+      //      input[idepth][2*i0+1] = ( parts[idepth][i0].hwId,  parts[idepth][i0].hwPhi );
     } 
     algo_tau_layer2_v3(input[idepth],output[idepth]);
   } 
   //tmpaxi_t tau[DEPTH][NPART];  
+  PFChargedObj parts_out[DEPTH][NTAU];  
   for(int idepth = 0; idepth < 1; idepth++) {
     for(int i0 = 0; i0 < NTAU; i0++) { 
       PFChargedObj pTmp;
@@ -58,13 +62,13 @@ int main(int argc, char ** argv) {
       float pPt  = pTmp.hwPt;pPt/=PT_SCALE;
       float pEta = pTmp.hwEta;pEta/=ETAPHI_SCALE;
       float pPhi = pTmp.hwPhi;pPhi/=ETAPHI_SCALE;
-      parts_out[idepth][ipart] = pTmp;
+      parts_out[idepth][i0] = pTmp;
       std::cout << "===> depth " << idepth << " -- part " << " vector " << pPt << "-- " << pEta << " -- " << pPhi << std::endl;
     }
   }
   for(int idepth = 0; idepth < DEPTH; idepth++) { 
     serInPatterns(input[idepth]); serOutPatterns(output[idepth]);
-    serHR(chparts_out[idepth], emparts_out[idepth], neparts_out[idepth], muparts_out[idepth],parts_out[idepth]);
+    serHR(parts[idepth],parts_out[idepth]);
   }
 }
 

@@ -52,6 +52,7 @@ void MP7PatternSerializer::operator()(const MP7DataWord event[MP7_NCHANN])
         }
     }
 }
+/*
 void MP7PatternSerializer::process(const axi_t event[MP7_NCHANN]) 
 {
     if (!file_) return;
@@ -71,6 +72,7 @@ void MP7PatternSerializer::process(const axi_t event[MP7_NCHANN])
         }
     }
 }
+*/
 template<typename T> void MP7PatternSerializer::print(unsigned int iframe, const T & event) 
 //void MP7PatternSerializer::print(const MP7DataWord event[MP7_NCHANN]) 
 {
@@ -100,6 +102,7 @@ void MP7PatternSerializer::push(const MP7DataWord event[MP7_NCHANN])
     }
     if (imux == nmux_-1) flush();
 }
+/*
 void MP7PatternSerializer::push(const axi_t event[MP7_NCHANN])
 {
     int imux = (ipattern_ % nmux_), offs = imux * nchann_;
@@ -110,6 +113,7 @@ void MP7PatternSerializer::push(const axi_t event[MP7_NCHANN])
     }
     if (imux == nmux_-1) flush();
 }
+*/
 void MP7PatternSerializer::flush() {
     for (unsigned int im = 0, iframe = ipattern_ - nmux_ + 1; im < nmux_; ++im, ++iframe) {
         print(iframe, buffer_[im]);
@@ -165,6 +169,17 @@ void HumanReadablePatternSerializer::operator()(const PFChargedObj inch[NTRACK],
     fprintf(file_, "Frame %04u:\n", ipattern_);
     dump_pfch(inch,inem,inne,inmu);
     dump_out (outpart);
+    fprintf(file_, "\n");
+    if (file_ == stdout) fflush(file_);
+    ipattern_++;
+}
+
+
+void HumanReadablePatternSerializer::operator()(const PFChargedObj outpart[DATA_SIZE],const PFChargedObj outtau[NTAU]) 
+{
+    if (!file_) return;
+    fprintf(file_, "Frame %04u:\n", ipattern_);
+    dump_out (outpart,outtau);
     fprintf(file_, "\n");
     if (file_ == stdout) fflush(file_);
     ipattern_++;
@@ -249,6 +264,20 @@ void HumanReadablePatternSerializer::dump_out(const PFChargedObj outpart[DATA_SI
 {
     for (int i = 0; i < DATA_SIZE; ++i) {
         fprintf(file_, "   particle out %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d      hwZ0 %+7d\n", i,
+                int(outpart[i].hwPt), int(outpart[i].hwEta), int(outpart[i].hwPhi), int(outpart[i].hwId), int(outpart[i].hwZ0));
+    }
+    if (file_ == stdout) fflush(file_);
+}
+
+
+void HumanReadablePatternSerializer::dump_out(const PFChargedObj outpart[DATA_SIZE],const PFChargedObj outtau[NTAU]) 
+{
+    for (int i = 0; i < DATA_SIZE; ++i) {
+        fprintf(file_, "   particle out %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d      hwZ0 %+7d\n", i,
+                int(outpart[i].hwPt), int(outpart[i].hwEta), int(outpart[i].hwPhi), int(outpart[i].hwId), int(outpart[i].hwZ0));
+    }
+    for (int i = 0; i < NTAU; ++i) {
+        fprintf(file_, "   tau out %3d, hwPt % 7d   hwEta %+7d   hwPhi %+7d   hwId %1d      hwZ0 %+7d\n", i,
                 int(outpart[i].hwPt), int(outpart[i].hwEta), int(outpart[i].hwPhi), int(outpart[i].hwId), int(outpart[i].hwZ0));
     }
     if (file_ == stdout) fflush(file_);

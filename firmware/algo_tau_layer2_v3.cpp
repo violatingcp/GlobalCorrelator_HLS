@@ -34,52 +34,22 @@ void ptsort_hwopt_ind(T in[NIn], T out[NOut]) {
     }
 
 }
-template<unsigned int N, unsigned int OFFS> 
-inline void mp7_pack(PFChargedObj obj[N], axi_t &data) {
-    #pragma HLS inline
-    for (unsigned int i = 0; i < N; ++i) {
-      #pragma HLS UNROLL
-      int pOffset = i*64;
-      data.data.range(15+pOffset,0 +pOffset) = obj[i].hwPt;
-      data.data.range(24+pOffset,16+pOffset) = obj[i].hwEta;
-      data.data.range(34+pOffset,25+pOffset) = obj[i].hwPhi;
-      data.data.range(38+pOffset,35+pOffset) = obj[i].hwId;
-      data.data.range(48+pOffset,39+pOffset) = obj[i].hwZ0;
-    }
-}
-template<unsigned int N, unsigned int OFFS> 
-inline void mp7_pack(hls::stream<PFChargedObj> obj[], axi_t &data) {
-    #pragma HLS inline
-    for (unsigned int i = 0; i < N; ++i) {
-      #pragma HLS UNROLL
-      int pOffset = i*64;
-      PFChargedObj tmpobj = obj[i].read();
-      data.data.range(15+pOffset,0 +pOffset) = tmpobj.hwPt;
-      data.data.range(24+pOffset,16+pOffset) = tmpobj.hwEta;
-      data.data.range(34+pOffset,25+pOffset) = tmpobj.hwPhi;
-      data.data.range(38+pOffset,35+pOffset) = tmpobj.hwId;
-      data.data.range(48+pOffset,39+pOffset) = tmpobj.hwZ0;
-    }
-}
-inline void mp7_pack(hls::stream<PFChargedObj> &obj, axi_t &data) {
-    #pragma HLS inline
-  PFChargedObj tmpobj = obj.read();
-  data.data.range(15,0 ) = tmpobj.hwPt;
-  data.data.range(24,16) = tmpobj.hwEta;
-  data.data.range(34,25) = tmpobj.hwPhi;
-  data.data.range(38,35) = tmpobj.hwId;
-  data.data.range(48,39) = tmpobj.hwZ0;
-}
 template<unsigned int N,unsigned int OFFSET, unsigned int OFFSET2> 
 inline void mp7_unpack(MP7DataWord data[MP7_NCHANN], hls::stream<PFChargedObj> data_in[DATA_SIZE]) {
     #pragma HLS inline
     #pragma HLS PIPELINE
     for (unsigned int i = 0; i < N; ++i) {
       PFChargedObj pTmp;
-      pTmp.hwPt       = data[OFFSET+2*i+0](15, 0);
-      pTmp.hwEta      = data[OFFSET+2*i+0](31,16);
-      pTmp.hwPhi      = data[OFFSET+2*i+1](15, 0);
-      pTmp.hwId       = data[OFFSET+2*i+1](31,16);
+      //32bit below
+      //pTmp.hwPt       = data[OFFSET+2*i+0](15, 0);
+      //pTmp.hwEta      = data[OFFSET+2*i+0](31,16);
+      //pTmp.hwPhi      = data[OFFSET+2*i+1](15, 0);
+      //pTmp.hwId       = data[OFFSET+2*i+1](31,16);
+      //64bit below
+      pTmp.hwPt       = data[OFFSET+i](15, 0);
+      pTmp.hwEta      = data[OFFSET+i](31,16);
+      pTmp.hwPhi      = data[OFFSET+i](47,32);
+      pTmp.hwId       = data[OFFSET+i](63,48);
       data_in[i+OFFSET2].write(pTmp);
     }
 }
@@ -116,37 +86,16 @@ void algo_tau_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_NCH
   //#pragma HLS stream variable=allparts_out depth=3  
   //#pragma HLS stream variable=link_out     depth=5
 
-  mp7_unpack<36,0,0>  (input,allparts_in);
-  mp7_unpack<36,0,36> (input,allparts_in);
-  mp7_unpack<36,0,72> (input,allparts_in);
-  mp7_unpack<20,0,108>(input,allparts_in);
-  sorting_network_128_nn(allparts_in,allparts_out);
+  //Doing 64 for now
+  mp7_unpack<64,0,0>  (input,allparts_in);
+  //mp7_unpack<28,0,36> (input,allparts_in);
+  //  mp7_unpack<36,0,72> (input,allparts_in);
+  //  mp7_unpack<20,0,108>(input,allparts_in);
+  sorting_network_64_nn(allparts_in,allparts_out);
   for(int i0 = 0; i0 < NTAU; i0++) { 
     PFChargedObj tmp_out; 
     allparts_out.read(tmp_out);
-    output[i0*2+0] = ( tmp_out.hwEta, tmp_out.hwPt );
-    output[i0*2+1] = ( tmp_out.hwId,  tmp_out.hwPhi );
+    output[i0] = ( tmp_out.hwId,  tmp_out.hwPhi , tmp_out.hwEta, tmp_out.hwPt );
   }
-
-  //axi_t data_out;
-  //mp7_pack(allparts_out,data_out);
-  //link_out.write(data_out);
-  /*
-  for(int itau = 0; itau < NTAU; itau++) {
-    PFChargedObj dummyc; 
-    result_t taunn[N_OUTPUTS];
-    input_t  nn_data[NTAUPARTS*8];
-    make_inputs<NTAUPARTS>(nn_data,allparts_out);            
-    tau_nn(nn_data,taunn);
-    dummyc.hwPt = taunn[0]*100; dummyc.hwEta = nn_data[1]; dummyc.hwPhi = nn_data[2]; dummyc.hwId = 0; dummyc.hwZ0 = 0;
-    //taus[itau] = dummyc;
-    axi_t data_out;
-    mp7_pack<1,0>(&dummyc,data_out);
-    link_out.write(data_out);
-  }
-  //PFChargedObj tausout[NTAU]; 
-  //#pragma HLS ARRAY_PARTITION variable=tausout complete
-  //ptsort_hwopt_ind<PFChargedObj,NTAU,NTAU>(taus, tausout);
-  */
 }
 

@@ -3,17 +3,18 @@
 
 #include <ap_int.h>
 #include <hls_stream.h>
+#include "data.h"
 
 #define DATA_SIZE 64
 #define NTAU  6
 #define NREGIONS 36
 #define NPART 25
-#define DEPTH NREGIONS*2
+#define DEPTH 2
 #define NTAUPARTS  10
 #define DRCONE 8410
 #define DR2MAX 10000
 #define MP7_NCHANN 72
-typedef ap_uint<32> MP7DataWord;
+//typedef ap_uint<32> MP7DataWord;
 
 static float PT_SCALE = 4.0;     // quantize in units of 0.25 GeV (can be changed)
 static float ETAPHI_FACTOR = 4;  // size of an ecal crystal in phi in integer units (our choice)

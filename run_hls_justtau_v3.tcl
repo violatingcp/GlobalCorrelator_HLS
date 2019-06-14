@@ -1,8 +1,8 @@
 open_project -reset proj_justtau_v3
-set_top algo_justtau_layer2_v3
+set_top algo_tau_layer2_v3
+add_files firmware/tau_nn.cpp
 add_files firmware/algo_tau_layer2_v3.cpp 
 add_files firmware/sorting_network.cpp
-add_files firmware/firmware/tau_nn.cpp
 add_files -tb utils/pattern_serializer.cpp -cflags "-DTESTMP7"
 add_files -tb algo_tau_layer2_v3_tb.cpp 
 open_solution -reset "solution1"

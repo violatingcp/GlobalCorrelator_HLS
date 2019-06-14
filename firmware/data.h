@@ -31,7 +31,8 @@ enum PID { PID_Charged=0, PID_Neutral=1, PID_Photon=2, PID_Electron=3, PID_Muon=
    #define NEMCALO 10
    #define NPHOTON NEMCALO
    #define NSELCALO 10
-   #define DATA_SIZE 32
+   #define DATA_SIZE 64
+   #define NTAU 6
 #elif TESTCTP7  // reduced input size to fit in a board
    #define NTRACK 7
    #define NCALO 5
@@ -119,6 +120,8 @@ struct VtxObj {
 #define MP7_NCHANN 72
 #define CTP7_NCHANN_IN 67
 #define CTP7_NCHANN_OUT 48
-typedef ap_uint<32> MP7DataWord;
+//Note trying to upgrade to 64
+//typedef ap_uint<32> MP7DataWord;
+typedef ap_uint<64> MP7DataWord;
 
 #endif

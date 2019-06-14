@@ -3,9 +3,10 @@
 
 //#include "GlobalCorrelator_HLS/firmware/simple_fullpfalgo.h"
 #include "hls_stream.h"
+#include "data.h"
 
-#define DATA_SIZE 128
 #define NTAU 6
+#define DATA_SIZE 64
 #define NTAUPARTS 10
 
 void swap1(PFChargedObj &data1,PFChargedObj &data2);
