@@ -138,14 +138,14 @@ int main(int argc, char ** argv) {
       arr_link_out[idepth][ipart] = pTmpOut;
       float pPt  = pTmpOut.range(15,0);  pTmp.hwPt  = pPt;  pPt/=PT_SCALE;
       float pEta = pTmpOut.range(31,16); pTmp.hwEta = pEta; pEta/=ETAPHI_SCALE;
-      float pPhi = pTmpOut.range(15,0);  pTmp.hwPhi = pPhi; pPhi/=ETAPHI_SCALE;
-      int   pId  = pTmpOut.range(31,16); pTmp.hwId  = pId;
+      float pPhi = pTmpOut.range(47,32); pTmp.hwPhi = pPhi; pPhi/=ETAPHI_SCALE;
+      int   pId  = pTmpOut.range(63,48); pTmp.hwId  = pId;
       parts_out[idepth][ipart] = pTmp;
       std::cout << "===> tau part " << idepth << " -- part " << ipart << " vector " << pPt << "-- " << pEta << " -- " << pPhi << " - Id - " << pId << std::endl;
     }
   }
   for(int idepth = 0; idepth < DEPTH; idepth++) { 
-    serInPatterns.process(arr_link_in[idepth]); serOutPatterns.process(arr_link_out[idepth]);
+    serInPatterns(arr_link_in[idepth]); serOutPatterns(arr_link_out[idepth]);
     serHR(chparts_out[idepth], emparts_out[idepth], neparts_out[idepth], muparts_out[idepth],parts_out[idepth]);
   }
 }
