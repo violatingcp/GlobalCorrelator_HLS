@@ -47,7 +47,7 @@ struct layer_config
 
 
 #define DIV_ROUNDUP(n,d) ((n + d - 1) / d)
-#define ADD_LAT 5
+#define ADD_LAT 4
 
  template<class data_T, class res_T, typename CONFIG_T>
 void compute_layer(
@@ -76,7 +76,7 @@ void compute_layer(
         #pragma HLS ARRAY_PARTITION variable=biases complete
         //#pragma HLS ARRAY_RESHAPE   variable=weights block factor=block_factor
         #pragma HLS ARRAY_RESHAPE   variable=mult block factor=block_factor
-        #pragma HLS ARRAY_PARTITION   variable=mult complete
+        //#pragma HLS ARRAY_PARTITION   variable=mult complete
         #pragma HLS ARRAY_PARTITION variable=acc complete
 
 	int multiplier_limit  = ceil(float(CONFIG_T::n_in*CONFIG_T::n_out) / float(CONFIG_T::reuse_factor)) - floor(float(CONFIG_T::n_zeros) / float(CONFIG_T::reuse_factor));
