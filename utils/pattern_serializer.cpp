@@ -22,6 +22,12 @@ MP7PatternSerializer::MP7PatternSerializer(const std::string &fname, unsigned in
         buffer_.resize(nmux_);
         zero();
     }
+    MP7DataWord zero_event[MP7_NCHANN];
+    for (unsigned int j = 0; j < MP7_NCHANN; ++j) zero_event[j] = 0;
+    for (unsigned int j = 0; j < 6; ++j) {
+      print(ipattern_, zero_event,true);
+      ipattern_++;
+    }
 }
 
 MP7PatternSerializer::~MP7PatternSerializer() 
@@ -73,23 +79,25 @@ void MP7PatternSerializer::process(const axi_t event[MP7_NCHANN])
     }
 }
 */
-template<typename T> void MP7PatternSerializer::print(unsigned int iframe, const T & event) 
+template<typename T> void MP7PatternSerializer::print(unsigned int iframe, const T & event, bool zero) 
 //void MP7PatternSerializer::print(const MP7DataWord event[MP7_NCHANN]) 
 {
   //for(unsigned int i1 = 0; i1 < 6;++i1) { //clone 6 times
-  fprintf(file_, "Frame %04u :", iframe*6);
+  fprintf(file_, "Frame %04u :", iframe);
   unsigned int dummy=0;
   unsigned int count=0;
   for (unsigned int i = 0; i < MP7_NCHANN; ++i) {
+    /*
     if(i > 0 && i % 12 == 0)       { 
       for(int j = 0; j < 60; j++) fprintf(file_, " 1v%016x", dummy);
       fprintf(file_, "\n");
       count++;
       fprintf(file_, "Frame %04u :", iframe*6+count);
-    }
-    fprintf(file_, " 1v%016x", unsigned(event[i]));
+      }*/
+    if(!zero) fprintf(file_, " 1v%016x", unsigned(event[i]));
+    if(zero)  fprintf(file_, " 0v%016x", unsigned(event[i]));
   }
-  for(int j = 0; j < 60; j++) fprintf(file_, " 1v%016x", dummy); 
+  //for(int j = 0; j < 60; j++) fprintf(file_, " 1v%016x", dummy); 
   fprintf(file_, "\n");
 }
 void MP7PatternSerializer::push(const MP7DataWord event[MP7_NCHANN])
