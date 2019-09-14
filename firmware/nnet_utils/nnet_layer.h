@@ -47,6 +47,7 @@ struct layer_config
 
 
 #define DIV_ROUNDUP(n,d) ((n + d - 1) / d)
+#define ADD_LAT 6
 
  template<class data_T, class res_T, typename CONFIG_T>
 void compute_layer(
@@ -70,13 +71,16 @@ void compute_layer(
 
         static const int block_factor       = (CONFIG_T::n_in*CONFIG_T::n_out/CONFIG_T::reuse_factor); //DIV_ROUNDUP(CONFIG_T::n_in*CONFIG_T::n_out, CONFIG_T::reuse_factor);
 	std::cout << " ---> " << CONFIG_T::n_in*CONFIG_T::n_out << " -- " << CONFIG_T::reuse_factor << " --- " << (CONFIG_T::n_in*CONFIG_T::n_out/CONFIG_T::reuse_factor) << std::endl;
-        // #pragma HLS ARRAY_PARTITION variable=weights complete // remove this line for now, it breaks compression sometimes
+        //#pragma HLS ARRAY_PARTITION variable=weights block factor=block_factor // remove this line for now, it breaks compression sometimes
+        //#pragma HLS ARRAY_PARTITION variable=weights complete // remove this line for now, it breaks compression sometimes
         #pragma HLS ARRAY_PARTITION variable=biases complete
+        //#pragma HLS ARRAY_RESHAPE   variable=weights block factor=block_factor
         #pragma HLS ARRAY_RESHAPE   variable=mult block factor=block_factor
+        //#pragma HLS ARRAY_PARTITION   variable=mult complete
         #pragma HLS ARRAY_PARTITION variable=acc complete
 
-    int multiplier_limit  = ceil(float(CONFIG_T::n_in*CONFIG_T::n_out) / float(CONFIG_T::reuse_factor)) - floor(float(CONFIG_T::n_zeros) / float(CONFIG_T::reuse_factor));
-    #pragma HLS ALLOCATION instances=mul limit=multiplier_limit operation
+	int multiplier_limit  = ceil(float(CONFIG_T::n_in*CONFIG_T::n_out) / float(CONFIG_T::reuse_factor)) - floor(float(CONFIG_T::n_zeros) / float(CONFIG_T::reuse_factor));
+	#pragma HLS ALLOCATION instances=mul limit=multiplier_limit operation
 
     } else if (CONFIG_T::io_type == io_serial){
         #pragma HLS ARRAY_RESHAPE variable=weights complete dim=2
@@ -110,16 +114,34 @@ void compute_layer(
         acc[iacc] = (typename CONFIG_T::accum_t) biases[iacc];
     }
 
-    // Accumulate multiplication result
-    Accum1: for(int ii = 0; ii < CONFIG_T::n_in; ii++) {
-        if (CONFIG_T::io_type == io_serial){
-            #pragma HLS PIPELINE
-        }
-        Accum2: for(int jj = 0; jj < CONFIG_T::n_out; jj++) {
-	  acc[jj] += mult[ii*CONFIG_T::n_out+jj];
-        }
+    // special loop for accumulation
+    typename CONFIG_T::accum_t acc_lat[CONFIG_T::n_out][ADD_LAT];
+    #pragma HLS ARRAY_PARTITION variable=acc_lat complete dim=0
+    AddLatencyInit: 
+    for (int ii = 0; ii < CONFIG_T::n_out; ii++){
+      for (int ij= 0; ij < ADD_LAT; ij++){
+        #pragma UNROLL
+	acc_lat[ii][ij] = 0;
+      }
+    }
+    for(int ii = 0; ii < CONFIG_T::n_in; ii++) {
+	for (int io = 0; io < CONFIG_T::n_out; io++){
+         #pragma HLS UNROLL
+         for (int ia = 0; ia < ADD_LAT; ia++){
+          #pragma HLS UNROLL
+	  int index = ii*CONFIG_T::n_out+io;
+	  acc_lat[io][ia] += mult[index];
+	}
+      }
     }
 
+ FullAccum: 
+    for (int ii = 0; ii < CONFIG_T::n_out; ii++){
+            #pragma HLS UNROLL
+      for (int ij= 0; ij < ADD_LAT; ij++){
+	acc[ii] += acc_lat[ii][ij];
+      }
+     }
     // Cast to "res_t" type
     Result: for(int ires = 0; ires < CONFIG_T::n_out; ires++){
         if (CONFIG_T::io_type == io_serial){

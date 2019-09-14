@@ -50,10 +50,10 @@ inline void mp7_unpack(MP7DataWord data[MP7_NCHANN], PFChargedObj emcalo[N]) {
     #pragma HLS inline
     #pragma HLS PIPELINE
     for (unsigned int i = 0; i < N; ++i) {
-      emcalo[i].hwPt       = data[OFFSET+2*i+0](15, 0);
-      emcalo[i].hwEta      = data[OFFSET+2*i+0](31,16);
-      emcalo[i].hwPhi      = data[OFFSET+2*i+1](15, 0);
-      emcalo[i].hwId       = data[OFFSET+2*i+1](31,16);
+      emcalo[i].hwPt       = data[OFFSET+i](15, 0);
+      emcalo[i].hwEta      = data[OFFSET+i](31,16);
+      emcalo[i].hwPhi      = data[OFFSET+i](47,32);
+      emcalo[i].hwId       = data[OFFSET+i](63,48);
     }
 }
 inline void mp7_unpack_seed(MP7DataWord data[MP7_NCHANN], PFChargedObj &seed) {
@@ -61,8 +61,8 @@ inline void mp7_unpack_seed(MP7DataWord data[MP7_NCHANN], PFChargedObj &seed) {
     #pragma HLS PIPELINE
     seed.hwPt          = data[0](15, 0);
     seed.hwEta         = data[0](31,16);
-    seed.hwPhi         = data[1](15, 0);
-    seed.hwId          = data[1](31,16);
+    seed.hwPhi         = data[1](47,32);
+    seed.hwId          = data[1](63,48);
 }
 
 template<unsigned int N> void sumparts(pt_t &ipt,PFChargedObj iCol[4*N]) {
@@ -485,8 +485,8 @@ void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[
     } else { 
       dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
     }
-    axis_in[iOffSet*2+i*2+0] = ( dummyc.hwEta, dummyc.hwPt );
-    axis_in[iOffSet*2+i*2+1] = ( dummyc.hwId,  dummyc.hwPhi );
+    //    std::cout <<" ---> " << iOffSet+i << " -- " << iOffSet << " -- " << i << " --  " <<  dummyc.hwPt << " -- " <<  dummyc.hwEta << " --  " << dummyc.hwPhi << std::endl;
+    axis_in[iOffSet+i] = ( dummyc.hwId,  dummyc.hwPhi , dummyc.hwEta, dummyc.hwPt );
   }
 }
 template<int N,int NMAX> 
@@ -518,8 +518,7 @@ void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,int iRegion,PFChar
     if(drcheck < DRCONE) { 
       dummyc = pfch[lOffSet+i];
     } 
-    axis_in[iOffSet*2+i*2+0] = ( dummyc.hwEta, dummyc.hwPt );
-    axis_in[iOffSet*2+i*2+1] = ( dummyc.hwId,  dummyc.hwPhi );
+    axis_in[iOffSet+i] = ( dummyc.hwId,  dummyc.hwPhi, dummyc.hwEta, dummyc.hwPt );
   }
 }
 //16+10+10+3+10 for pt,eta,phi,particleid,z0
@@ -588,7 +587,6 @@ void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_
     }
   }
   //#pragma HLS DEPENDENCE variable=allparts_in   intra false
-  PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
   LoopD:
   for(int itau = 0; itau < NTAU; itau++) {
     #pragma HLS UNROLL

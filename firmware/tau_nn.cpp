@@ -84,6 +84,4 @@ void tau_nn(
     #pragma HLS ARRAY_PARTITION variable=logits4 complete dim=0
     nnet::compute_layer<layer3_t, result_t, config4>(layer3_out, logits4, w4, b4);
     nnet::sigmoid<result_t, result_t, sigmoid_config4>(logits4, res);
-
-
 }

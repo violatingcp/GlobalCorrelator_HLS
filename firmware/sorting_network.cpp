@@ -753,7 +753,7 @@ void block64_step1_net_64(PFChargedObj datas[64]) {
 void sorting_network_64_in(PFChargedObj datas[64]) {
   //#pragma HLS pipeline II=2
   //#pragma HLS pipeline II=1
-#pragma HLS pipeline II=6
+#pragma HLS pipeline II=2
 	block2_step1_net_64(datas);
 	block4_step2_net_64(datas);
 	block4_step1_net_64(datas);
@@ -2656,7 +2656,7 @@ void block128_step1_net_128(PFChargedObj datas[128]) {
 
 
 void sorting_network_128_in(PFChargedObj datas[128]) {
-#pragma HLS pipeline II=6
+#pragma HLS pipeline II=2
 
 	block2_step1_net_128(datas);
 	block4_step2_net_128(datas);
@@ -2709,7 +2709,7 @@ void sorting_network_64(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream
  #pragma HLS interface ap_ctrl_hs port=return
  #pragma HLS interface axis port=data_in register
  #pragma HLS interface axis port=data_out register
- #pragma HLS PIPELINE II=36
+ #pragma HLS PIPELINE II=12
   
   PFChargedObj datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
@@ -2726,7 +2726,7 @@ void sorting_network_128(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::strea
   #pragma HLS interface ap_ctrl_hs port=return
   #pragma HLS interface axis port=data_in register
   #pragma HLS interface axis port=data_out register
-  #pragma HLS PIPELINE II=36
+  #pragma HLS PIPELINE II=12
   
   PFChargedObj datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
@@ -2768,13 +2768,13 @@ void sorting_network_64_nn(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::str
   #pragma HLS interface ap_ctrl_hs port=return
   #pragma HLS interface axis port=data_in  register
   #pragma HLS interface axis port=data_out register
-  #pragma HLS PIPELINE II=36
+  #pragma HLS PIPELINE II=12
   
   PFChargedObj datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
   for(int i0 = 0; i0 < NTAU; i0++) {
     input(datas, data_in);
-    sorting_network_64_in(datas);
+    //sorting_network_64_in(datas);
     input_t  nn_data[NTAUPARTS*8];
     result_t taunn[N_OUTPUTS];
     PFChargedObj dummyc = datas[0];
@@ -2789,7 +2789,7 @@ void sorting_network_128_nn(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::st
   #pragma HLS interface ap_ctrl_hs port=return
   #pragma HLS interface axis port=data_in  register
   #pragma HLS interface axis port=data_out register
-  #pragma HLS PIPELINE II=36
+  #pragma HLS PIPELINE II=12
   
   PFChargedObj datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
