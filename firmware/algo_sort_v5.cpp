@@ -1,4 +1,5 @@
-#include "algo_inputs_layer2_v3.h"
+#include "algo_sort_v5.h"
+#include "tau_nn.h"
 
 template<int NB>
 ap_uint<NB> dr2_int_cap(etaphi_t eta1, etaphi_t phi1, etaphi_t eta2, etaphi_t phi2, ap_uint<NB> max) {
@@ -31,6 +32,34 @@ void ptsort_hwopt_ind(T in[NIn], T out[NOut]) {
         for (int iout = NOut-1; iout >= 0; --iout) {
             if (tmp[iout].hwPt <= in[it].hwPt) {
                 if (iout == 0 || tmp[iout-1].hwPt > in[it].hwPt) {
+                    tmp[iout] = in[it];
+                } else {
+                    tmp[iout] = tmp[iout-1];
+                }
+            }
+        }
+
+    }
+    for (int iout = 0; iout < NOut; ++iout) {
+        out[iout] = tmp[iout];
+    }
+
+}
+
+template<typename T, int NIn, int NOut>
+void ptsort_hwopt_axi(T in[NIn], T out[NOut]) { 
+    #pragma HLS PIPELINE
+    T tmp[NOut];
+    #pragma HLS ARRAY_PARTITION variable=tmp complete
+    for (int iout = 0; iout < NOut; ++iout) {
+        #pragma HLS unroll
+        tmp[iout] = 0;
+    }
+
+    for (int it = 0; it < NIn; ++it) {
+        for (int iout = NOut-1; iout >= 0; --iout) {
+            if (tmp[iout] <= in[it]) {
+                if (iout == 0 || tmp[iout-1] > in[it]) {
                     tmp[iout] = in[it];
                 } else {
                     tmp[iout] = tmp[iout-1];
@@ -472,7 +501,7 @@ void tausort_in(PFChargedObj pfch[N0], PFChargedObj pfpho[N1], PFChargedObj pfne
   }
 }
 template<int N,int NMAX> 
-void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[N],MP7DataWord axis_in[]) { 
+void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[N],axi_t axis_in[]) { 
   #pragma HLS inline
   #pragma HLS PIPELINE 
   const ap_int<16> eDR2MAX = DR2MAX;
@@ -485,7 +514,7 @@ void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[
     } else { 
       dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
     }
-    axis_in[iOffSet+i] = ( dummyc.hwId,  dummyc.hwPhi, dummyc.hwEta, dummyc.hwPt );
+    axis_in[iOffSet+i] = ( dummyc.hwId, dummyc.hwPhi, dummyc.hwEta, dummyc.hwPt );
   }
 }
 template<int N,int NMAX> 
@@ -504,23 +533,25 @@ void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,int iRegion,PFChar
     axis_in[iOffSet+i].write(dummyc);
   }
 }
-template<int N,int NMAX> 
-void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,int iRegion,PFChargedObj pfch[],MP7DataWord axis_in[]) { 
-  #pragma HLS inline
-  #pragma HLS PIPELINE 
-  const ap_int<16> eDR2MAX = DR2MAX;
-  PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
-  int lOffSet = iRegion*N;
-  for (int i = 0; i < NMAX; i++) {
-    #pragma HLS UNROLL
-    int drcheck = dr2_int_cap<12>(seedeta,seedphi,pfch[i].hwEta,pfch[i].hwPhi,eDR2MAX);
-    if(drcheck < DRCONE) { 
-      dummyc = pfch[lOffSet+i];
-    } 
-    axis_in[iOffSet+i] = ( dummyc.hwId,  dummyc.hwPhi , dummyc.hwEta, dummyc.hwPt );
+template<unsigned int N>
+void make_inputs(input_t nn_data[N*8], axi_t pf[DATA_SIZE]) {
+  //#pragma HLS inline
+  #pragma HLS PIPELINE
+  for (int i = 0; i < N; i++) {
+    #pragma HLS PIPELINE II=1
+    axi_t tmpobj = pf[i];
+    nn_data[i*8+0] = input_t(tmpobj(15, 0));
+    nn_data[i*8+1] = input_t(tmpobj(31,16));
+    nn_data[i*8+2] = input_t(tmpobj(47,32));
+    ap_uint<16>  id = tmpobj(63, 48);
+    nn_data[i*8+3] = input_t(id == 2 ? 1 : 0);
+    nn_data[i*8+4] = input_t(id == 3 ? 1 : 0);
+    nn_data[i*8+5] = input_t(id == 4 ? 1 : 0);
+    nn_data[i*8+6] = input_t(id == 1 ? 1 : 0);
+    nn_data[i*8+7] = input_t(id == 0 ? 1 : 0);
   }
-}
-void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_NCHANN]) { 
+} 
+void algo_sort_v5(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_NCHANN]) { 
   #pragma HLS ARRAY_PARTITION variable=input complete
   #pragma HLS ARRAY_PARTITION variable=output complete
   #pragma HLS INTERFACE ap_none port=output
@@ -555,8 +586,8 @@ void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_
     mp7_unpack_seed(           input, chseed[idepth]);
     mp7_unpack<NTRACK,0>(      input, pfch [idepth]);
     mp7_unpack<NEMCALO,EMOFFS>(input, pfem [idepth]);
-    mp7_unpack<NCALO  ,HAOFFS>(input, pfne [idepth]);
-    mp7_unpack<NMU    ,MUOFFS>(input, pfmu [idepth]);
+    mp7_unpack<NCALO  ,HAOFFS>(input, pfne[idepth]);
+    mp7_unpack<NMU    ,MUOFFS>(input, pfmu[idepth]);
   }
   //Next iterate through seeds and compute DR
   PFChargedObj seeds[NTAU];
@@ -582,7 +613,8 @@ void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_
     }
   }
   //#pragma HLS DEPENDENCE variable=allparts_in   intra false
-  PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
+  axi_t data_out[NTAU][10];
+  #pragma HLS ARRAY_PARTITION variable=data_out complete
   LoopD:
   for(int itau = 0; itau < NTAU; itau++) {
     #pragma HLS UNROLL
@@ -594,17 +626,29 @@ void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_
     arraymap1(seedeta,seedphi,&(arr[1]));
     arraymap2(seedeta,seedphi,&(arr[2]));
     arraymap3(seedeta,seedphi,&(arr[3]));
+    axi_t data[64];
+    #pragma HLS ARRAY_PARTITION variable=data complete
     for(int iregion = 0; iregion < 4; iregion++) {
       #pragma HLS UNROLL
       int pRegion = arr[iregion];
-      int NTRACKOFFSET   = iregion*NTAUPARTS;//NTRACK;
-      int NPHOTONOFFSET  = iregion*NTAUPARTS+4*NTAUPARTS;//NPHOTON;
-      int NSELCALOOFFSET = iregion*NTAUPARTS+8*NTAUPARTS;//NSELCALO;
-      int NMUOFFSET      = iregion*NMU+12*NTAUPARTS;
-      deltaR_in<NTRACK,NTAUPARTS>   (NTRACKOFFSET,  seedeta,seedphi,pfch[pRegion], output);
-      deltaR_in<NPHOTON,NTAUPARTS>  (NPHOTONOFFSET, seedeta,seedphi,pfem[pRegion], output);
-      deltaR_in<NSELCALO,NTAUPARTS> (NSELCALOOFFSET,seedeta,seedphi,pfne[pRegion], output);
-      deltaR_in<NMU,NMU>            (NMUOFFSET,     seedeta,seedphi,pfmu[pRegion], output);
+      int NTRACKOFFSET   = iregion*NTAUPPARTS;//NTRACK;
+      int NPHOTONOFFSET  = iregion*NTAUPPARTS+4*NTAUPPARTS;//NPHOTON;
+      int NSELCALOOFFSET = iregion*NTAUPPARTS+8*NTAUPPARTS;//NSELCALO;
+      int NMUOFFSET      = iregion*NPMU+12*NTAUPPARTS;
+      deltaR_in<NTRACK,NTAUPPARTS>   (NTRACKOFFSET,  seedeta,seedphi,pfch[pRegion], data);
+      deltaR_in<NPHOTON,NTAUPPARTS>  (NPHOTONOFFSET, seedeta,seedphi,pfem[pRegion], data);
+      deltaR_in<NSELCALO,NTAUPPARTS> (NSELCALOOFFSET,seedeta,seedphi,pfne[pRegion], data);
+      deltaR_in<NMU,NPMU>            (NMUOFFSET,     seedeta,seedphi,pfmu[pRegion], data);
     }
+    ptsort_hwopt_axi<axi_t,64,10>(data,data_out[itau]);
+  }
+  for(int itau = 0; itau < NTAU; itau++) {  
+    axi_t dummyc = data_out[itau][0];
+    input_t  nn_data[NTAUPARTS*8];
+    make_inputs<NTAUPARTS>(nn_data,data_out[itau]);
+    result_t taunn[N_OUTPUTS];
+    tau_nn(nn_data,taunn);
+    dummyc(15,0) = taunn[0]*100;
+    output[itau] = dummyc;
   }
 }

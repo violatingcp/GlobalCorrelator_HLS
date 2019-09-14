@@ -20,16 +20,16 @@ typedef hls::stream<axi_t> stream_t;
 
 int main(int argc, char ** argv) {
   hls::stream<axi_t>     link_in[3*NTRACK+3*NCALO];
-  hls::stream<axi_t>     link_out[4*NTRACK+4*NCALO];
+  hls::stream<axi_t>     link_out[10];//4*NTRACK+4*NCALO];
 
   axi_t     arr_link_in[DEPTH][3*NTRACK+3*NCALO];
-  axi_t     arr_link_out[NTAU][4*NTRACK+4*NCALO];
+  axi_t     arr_link_out[NTAU][10];
 
   axi_t chparts[DEPTH][3*NTRACK];  
   axi_t neparts[DEPTH][3*NCALO];  
   PFChargedObj chparts_out[DEPTH][3*NTRACK];  
   PFChargedObj neparts_out[DEPTH][3*NCALO];  
-  PFChargedObj parts_out  [NTAU][4*NTRACK+4*NCALO];
+  PFChargedObj parts_out  [NTAU][10];
 
   float dphi  = 0.02; 
   float deta  = 0.02; 
@@ -95,7 +95,7 @@ int main(int argc, char ** argv) {
   }
   algo_inputs_layer2_real_v3(link_in,  link_out);
   for(int idepth = 0; idepth < NTAU; idepth++) {
-    for(int ipart = 0; ipart < 4*(NTRACK+NCALO); ipart++) { 
+    for(int ipart = 0; ipart < 10; ipart++) { 
       axi_t pTmpOut;
       PFChargedObj pTmp;
       link_out[ipart].read(pTmpOut);
