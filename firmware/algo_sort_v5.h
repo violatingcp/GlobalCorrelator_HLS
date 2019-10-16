@@ -11,9 +11,10 @@
 #define NPART 25
 #define DEPTH 2
 #define NTAUPARTS  10
-#define NTAUPPARTS  5
-#define NPMU        1
+#define NTAUPPARTS 10
+#define NPMU        2
 #define DRCONE 8410
+#define DRSMALLCONE 526
 #define DR2MAX 10000
 #define MP7_NCHANN 72
 #define EMOFFS NTRACK

@@ -1,6 +1,8 @@
 #ifndef SIMPLE_PFLOW_DATA_H
 #define SIMPLE_PFLOW_DATA_H
 
+#include <stdint.h>
+#include <math.h>
 #include "ap_int.h"
 #include <hls_stream.h>
 

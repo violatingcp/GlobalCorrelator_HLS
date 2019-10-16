@@ -93,7 +93,6 @@ inline void mp7_unpack_seed(MP7DataWord data[MP7_NCHANN], PFChargedObj &seed) {
     seed.hwPhi         = data[0](47,32);
     seed.hwId          = data[0](63,48);
 }
-
 template<unsigned int N> void sumparts(pt_t &ipt,PFChargedObj iCol[4*N]) {
   #pragma HLS inline
   pt_t pt1 = 0; 
@@ -113,6 +112,20 @@ template<unsigned int N> void sumparts(pt_t &ipt,PFChargedObj iCol[4*N]) {
     pt4 = pt4 + iCol[i+N*3].hwPt;
   }
   ipt = pt1 + pt2 + pt3 + pt4;
+} 
+template<unsigned int N> void sumpt(pt_t &ipt,axi_t iCol[N]) {
+  #pragma HLS inline
+  const ap_int<16> eDR2MAX = DR2MAX;
+  pt_t pt1         = iCol[0](15,0); 
+  etaphi_t seedeta = iCol[0](31,16);
+  etaphi_t seedphi = iCol[0](47,32);
+  for(int i = 1; i < N; i++) { 
+    int drcheck = dr2_int_cap<12>(seedeta,seedphi,iCol[i](31,16),iCol[i](47,32),eDR2MAX);
+    if(drcheck < DRSMALLCONE) { 
+      pt1 = pt1 +  iCol[i](15,0);
+    } 
+  }
+  ipt = pt1;
 } 
 void sumpt(pt_t &taupt, PFChargedObj pfch[NTRACK*4], PFChargedObj pfpho[NPHOTON*4], PFChargedObj pfne[NSELCALO*4], PFChargedObj pfmu[NMU*4]) {
   #pragma HLS inline
@@ -612,9 +625,8 @@ void algo_sort_v5(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_NCHANN]) 
       }
     }
   }
-  axi_t data_out[NTAU][64];
+  axi_t data_out[NTAU][10];
   #pragma HLS ARRAY_PARTITION variable=data_out complete
-  //#pragma HLS DEPENDENCE variable=allparts_in   intra false
   LoopD:
   for(int itau = 0; itau < NTAU; itau++) {
     #pragma HLS UNROLL
@@ -626,7 +638,7 @@ void algo_sort_v5(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_NCHANN]) 
     arraymap1(seedeta,seedphi,&(arr[1]));
     arraymap2(seedeta,seedphi,&(arr[2]));
     arraymap3(seedeta,seedphi,&(arr[3]));
-    axi_t data[64];
+    axi_t data[128];
     #pragma HLS ARRAY_PARTITION variable=data complete
     for(int iregion = 0; iregion < 4; iregion++) {
       #pragma HLS UNROLL
@@ -639,16 +651,20 @@ void algo_sort_v5(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_NCHANN]) 
       deltaR_in<NPHOTON,NTAUPPARTS>  (NPHOTONOFFSET, seedeta,seedphi,pfem[pRegion], data);
       deltaR_in<NSELCALO,NTAUPPARTS> (NSELCALOOFFSET,seedeta,seedphi,pfne[pRegion], data);
       deltaR_in<NMU,NPMU>            (NMUOFFSET,     seedeta,seedphi,pfmu[pRegion], data);
+      ptsort_hwopt_axi<axi_t,128,10>(data,data_out[itau]);
     }
-    ptsort_hwopt_axi<axi_t,64,10>(data,data_out[itau]);
   }
   for(int itau = 0; itau < NTAU; itau++) {
     input_t  nn_data[NTAUPARTS*8];
+    pt_t     nn_pt;
+    make_inputs<NTAUPARTS>(nn_data,data_out[itau]);
+    sumpt<NTAUPARTS>(nn_pt,data_out[itau]);
     make_inputs<NTAUPARTS>(nn_data,data_out[itau]);
     result_t taunn[N_OUTPUTS];
     axi_t dummyc = data_out[itau][0];
     tau_nn(nn_data,taunn);
-    dummyc(15,0) = taunn[0]*100;
+    dummyc(15,0)  = taunn[0]*100;
+    dummyc(63,48) = nn_pt;
     output[itau] = dummyc;
   }
 }

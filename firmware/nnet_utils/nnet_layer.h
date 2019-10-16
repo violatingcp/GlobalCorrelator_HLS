@@ -70,7 +70,7 @@ void compute_layer(
         #pragma HLS PIPELINE II=CONFIG_T::reuse_factor
 
         static const int block_factor       = (CONFIG_T::n_in*CONFIG_T::n_out/CONFIG_T::reuse_factor); //DIV_ROUNDUP(CONFIG_T::n_in*CONFIG_T::n_out, CONFIG_T::reuse_factor);
-	std::cout << " ---> " << CONFIG_T::n_in*CONFIG_T::n_out << " -- " << CONFIG_T::reuse_factor << " --- " << (CONFIG_T::n_in*CONFIG_T::n_out/CONFIG_T::reuse_factor) << std::endl;
+	//std::cout << " ---> " << CONFIG_T::n_in*CONFIG_T::n_out << " -- " << CONFIG_T::reuse_factor << " --- " << (CONFIG_T::n_in*CONFIG_T::n_out/CONFIG_T::reuse_factor) << std::endl;
         //#pragma HLS ARRAY_PARTITION variable=weights block factor=block_factor // remove this line for now, it breaks compression sometimes
         //#pragma HLS ARRAY_PARTITION variable=weights complete // remove this line for now, it breaks compression sometimes
         #pragma HLS ARRAY_PARTITION variable=biases complete
